@@ -1,4 +1,8 @@
-/usr/bin/lwrespawn /usr/bin/pcmanfm --desktop --profile LXDE-pi &
+# https://github.com/labwc/labwc/blob/master/docs/autostart
+# /usr/share/doc/labwc/autostart
+
+swaybg -i /usr/share/rpd-wallpaper/clouds.jpg >/dev/null 2>&1 &
 /usr/bin/lwrespawn /usr/bin/wf-panel-pi &
-/usr/bin/kanshi &
-/usr/bin/lxsession-xdg-autostart
+#volman &
+#wl-clip-persist -c regular &
+#kanshi &

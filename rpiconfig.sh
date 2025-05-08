@@ -32,72 +32,6 @@ sys_upgrade()
     test "$?" -eq 0 || error_exit "upgrade failed"
 }
 
-install_file()
-{
-    test "$#" == 2 || error_exit "install_file must take 2 parameters"
-    src=$1
-    dest=$2
-    local destdir=$(dirname $dest)
-    if [[ ! -d "$destdir" ]]; then
-        warning "$destdir doesn't exist"
-        return
-    fi
-    test ! -f "${dest}.bak" || return
-    echo "install_file $src $dest"
-    test -f "$src" || error_exit "source file doesn't exist"
-    if [[ "$dest" == "/home"* ]]; then
-        test -f "$dest" || touch "$dest"
-        mv "$dest" "${dest}.bak" 2>&1 | tee -a "$outfile"
-        test "$?" -eq 0 || error_exit "mv $dest ${dest}.bak failed"
-        cp "$src" "$dest" 2>&1 | tee -a "$outfile"
-        test "$?" -eq 0 || error_exit "cp $src $dest failed"
-    else
-        test -f "$dest" || sudo touch "$dest"
-        sudo mv "$dest" "${dest}.bak" 2>&1 | tee -a "$outfile"
-        test "$?" -eq 0 || error_exit "sudo mv $dest ${dest}.bak failed"
-        sudo cp "$src" "$dest" 2>&1 | tee -a "$outfile"
-        test "$?" -eq 0 || error_exit "sudo cp $src $dest failed"
-    fi
-}
-
-hide_launcher()
-{
-    test "$1" != "" || error_exit "hide_launcher failed"
-    test ! -f "$1" || return
-    echo "*** hide : $1"
-    printf "[Desktop Entry]\nHidden=True\n" > "$1"
-}
-
-filemod()
-{
-    if [[ ! -f "$1" ]]; then
-        echo "file ${1} doesn't exist" | tee -a "$outfile"
-        return
-    fi
-    filename=$(basename "$1")
-    echo "*** hide : ${filename}" | tee -a "$outfile"
-    dest="$HOME/.local/share/applications/$filename"
-    cp "$1" "$HOME/.local/share/applications/"
-    sed -i '/^MimeType=/d' "$dest" | tee -a "$outfile"
-    echo "NoDisplay=true" >> "$dest"
-}
-
-hide_application()
-{
-    dest="$HOME/.local/share/applications/${1}.desktop"
-    test ! -f "$dest" || return
-    dest="/usr/local/share/applications/${1}.desktop"
-    if [[ -f "$dest" ]]; then
-        filemod $dest
-        return
-    fi
-    dest="/usr/share/applications/${1}.desktop"
-    if [[ -f "$dest" ]]; then
-        filemod $dest
-        return
-    fi
-}
-
 build_src()
 {
     local pack="$1"
@@ -140,7 +74,7 @@ dest=/usr/bin/xfce4-terminal
 if [[ ! -f "$dest" ]]; then
     sys_upgrade
     echo "*** install base" | tee -a "$outfile"
-    APPLIST="thunar xfce4-terminal"
+    APPLIST="swaybg thunar xfce4-terminal"
     sudo apt -y install $APPLIST 2>&1 | tee -a "$outfile"
     test "$?" -eq 0 || error_exit "installation failed"
 fi
@@ -170,5 +104,20 @@ fi
     #~ sudo systemctl disable $APPLIST 2>&1 | tee -a "$outfile"
 #~ fi
 
+dest="/etc/xdg/labwc/rc.xml"
+if [[ ! -f "${dest}.bak" ]]; then
+    echo "*** install rc.xml" | tee -a "$outfile"
+    sudo cp "$dest" "${dest}.bak"
+    sudo cp "$basedir/labwc/rc.xml" "$dest"
+    test "$?" -eq 0 || error_exit "install rc.xml failed"
+fi
+
+dest="/etc/xdg/labwc/autostart"
+if [[ ! -f "${dest}.bak" ]]; then
+    echo "*** install autostart" | tee -a "$outfile"
+    sudo cp "$dest" "${dest}.bak"
+    sudo cp "$basedir/labwc/autostart" "$dest"
+    test "$?" -eq 0 || error_exit "install autostart failed"
+fi
 
 
