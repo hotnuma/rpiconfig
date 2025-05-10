@@ -84,7 +84,7 @@ fi
 dest=/usr/bin/plymouth
 if [[ -f "$dest" ]]; then
     echo "*** uninstall softwares" | tee -a "$outfile"
-    APPLIST="plymouth"
+    APPLIST="gvfs-backends plymouth"
     sudo apt -y purge $APPLIST 2>&1 | tee -a "$outfile"
     test "$?" -eq 0 || error_exit "uninstall failed"
     sudo apt -y autoremove 2>&1 | tee -a "$outfile"
@@ -104,6 +104,8 @@ fi
     #~ sudo systemctl disable $APPLIST 2>&1 | tee -a "$outfile"
 #~ fi
 
+# system settings -------------------------------------------------------------
+
 dest="/etc/xdg/labwc/rc.xml"
 if [[ ! -f "${dest}.bak" ]]; then
     echo "*** install rc.xml" | tee -a "$outfile"
@@ -119,5 +121,28 @@ if [[ ! -f "${dest}.bak" ]]; then
     sudo cp "$basedir/labwc/autostart" "$dest"
     test "$?" -eq 0 || error_exit "install autostart failed"
 fi
+
+# build programs ==============================================================
+
+dest="$builddir"
+if [[ ! -d "$dest" ]]; then
+    echo "*** create build dir" | tee -a "$outfile"
+    mkdir "$builddir"
+fi
+
+pushd "$builddir" 1>/dev/null
+
+dest="/usr/local/include/tinyc/cstring.h"
+build_src "libtinyc" "$dest"
+test -f "$dest" || error_exit "compilation failed"
+
+dest="/usr/local/bin/apt-upgrade"
+build_src "systools" "$dest"
+test -f "$dest" || error_exit "compilation failed"
+
+# terminate ===================================================================
+
+popd 1>/dev/null
+echo "done" | tee -a "$outfile"
 
 
