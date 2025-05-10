@@ -122,6 +122,14 @@ if [[ ! -f "${dest}.bak" ]]; then
     test "$?" -eq 0 || error_exit "install autostart failed"
 fi
 
+dest="$HOME/.config/user-dirs.dirs"
+if [[ ! -f "${dest}.bak" ]]; then
+    echo "*** user directories" | tee -a "$outfile"
+    sudo cp "$dest" "${dest}.bak"
+    sudo cp "$basedir/home/user-dirs.dirs" "$dest"
+    test "$?" -eq 0 || error_exit "user directories failed"
+fi
+
 # build programs ==============================================================
 
 dest="$builddir"
